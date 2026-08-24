@@ -4,7 +4,7 @@
 [日経電子版](https://www.nikkei.com/)で開いている記事の手がかりを端末内に保存し、[楽天証券版 日経テレコン](https://www.rakuten-sec.co.jp/)へ進んだあとの **同一記事探し** を補助します。
 
 サイト: [ayamoke.github.io/T-Kong](https://ayamoke.github.io/T-Kong/)  
-インストール: [Firefox Add-ons（AMO）](https://addons.mozilla.org/ja/firefox/addon/t-kong/)
+インストール: [Firefox Add-ons（AMO）](https://addons.mozilla.org/ja/android/addon/t-kong/)
 
 > 日経・楽天証券の公式プロダクトではありません。  
 > すでに楽天証券版日経テレコンを **正規利用できる方** 向けの操作補助です。
@@ -64,7 +64,7 @@ Discover から開くと、デフォルトブラウザ設定とは別に Google 
 
 ### A. Firefox Add-ons（おすすめ）
 
-1. スマホの Firefox で [T-Kong（AMO）](https://addons.mozilla.org/ja/firefox/addon/t-kong/) を開く
+1. スマホの Firefox で [T-Kong（AMO）](https://addons.mozilla.org/ja/android/addon/t-kong/) を開く
 2. **Firefox へ追加** をタップしてインストールする
 
 ### A-2. 署名済み `.xpi` をファイルから入れる（代替）
