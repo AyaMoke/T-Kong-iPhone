@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "T-Kong",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "日経記事タイトルを端末内に保存し、楽天証券版日経テレコンでの同一記事検索を補助する非公式拡張です。",
   "icons": {
     "48": "icons/icon-48.png",
@@ -9,8 +9,21 @@
     "128": "icons/icon-128.png"
   },
   "permissions": [
-    "storage"
+    "storage",
+    "tabs"
   ],
+  "action": {
+    "default_icon": {
+      "48": "icons/icon-48.png",
+      "96": "icons/icon-96.png"
+    },
+    "default_title": "日経テレコン(きょうの新聞)"
+  },
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
   "options_ui": {
     "page": "options/options.html",
     "open_in_tab": true
@@ -22,6 +35,7 @@
       ],
       "js": [
         "shared/settings.js",
+        "shared/broker.js",
         "content/nikkei.js"
       ],
       "css": [

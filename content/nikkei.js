@@ -5,19 +5,8 @@
   const APP_BUTTON_ID = "t-kong-open-app-button";
   const TOAST_ID = "t-kong-toast";
   const { ARTICLE_KEY, PHASE_KEY, getSettings, normalizeTitle } = TKongSettings;
-
-  // 楽天証券 iSPEED。認証はせず起動のみ。
-  // package だけの intent:// はインストール済みでも Play ストアに落ちやすいので、
-  // 実機で確認済みの ispeed://launch を使う。
-  const BROKER_PACKAGE = "jp.co.rakuten_sec.ispeed";
-  const BROKER_PLAY_URL =
-    "https://play.google.com/store/apps/details?id=" + BROKER_PACKAGE;
-  const BROKER_INTENT =
-    "intent://launch#Intent;scheme=ispeed;package=" +
-    BROKER_PACKAGE +
-    ";S.browser_fallback_url=" +
-    encodeURIComponent(BROKER_PLAY_URL) +
-    ";end";
+  const { tryOpenBrokerApp } = TKongBroker;
+  const MSG_OPEN_BROKER = "tKongOpenBrokerApp";
 
   function getHeadlineText(settings) {
     const candidates = [
@@ -54,23 +43,6 @@
     toast.textContent = message;
     document.documentElement.appendChild(toast);
     setTimeout(() => toast.remove(), 3600);
-  }
-
-  function tryOpenBrokerApp() {
-    try {
-      const anchor = document.createElement("a");
-      anchor.href = BROKER_INTENT;
-      anchor.rel = "noopener";
-      anchor.setAttribute("aria-hidden", "true");
-      document.documentElement.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      console.info("[T-Kong] broker app open requested");
-      return true;
-    } catch (error) {
-      console.info("[T-Kong] broker app open failed");
-      return false;
-    }
   }
 
   function mountOpenAppButton() {
@@ -123,6 +95,14 @@
     button.addEventListener("click", saveArticle);
     document.documentElement.appendChild(button);
   }
+
+  browser.runtime.onMessage.addListener((message) => {
+    if (message?.type !== MSG_OPEN_BROKER) return;
+    mountOpenAppButton();
+    tryOpenBrokerApp();
+    showToast("iSPEED → メニュー → マーケット → 日経テレコン → 同意 のあと、きょうの新聞を開きます");
+    return true;
+  });
 
   mountButton();
   new MutationObserver(() => {

@@ -9,6 +9,7 @@
     getFreshPendingArticle,
   } = TKongSettings;
   const PHASE_ASSIST = "assist";
+  const OPEN_TODAY_KEY = "tKongOpenTodayNewspaper";
 
   function showToast(message) {
     document.getElementById(TOAST_ID)?.remove();
@@ -51,6 +52,19 @@
     await browser.storage.local.set({ [PHASE_KEY]: PHASE_ASSIST });
   }
 
+  async function toastForAgree(settings) {
+    const data = await browser.storage.local.get(OPEN_TODAY_KEY);
+    if (data[OPEN_TODAY_KEY]) {
+      showToast("許諾に同意し、きょうの新聞へ進みます…");
+      return;
+    }
+    showToast(
+      settings.autoOpenAfterConsent !== false
+        ? "許諾に同意し、保存記事のオープンへ進みます…"
+        : "許諾に同意して進みます…"
+    );
+  }
+
   async function clickAgree() {
     const settings = await getSettings();
     if (settings.autoConsent === false) return true;
@@ -61,11 +75,7 @@
       document.querySelector(".userFeedback.agree img");
     if (agreeImg) {
       await armAssistIfNeeded(settings);
-      showToast(
-        settings.autoOpenAfterConsent !== false
-          ? "許諾に同意し、保存記事のオープンへ進みます…"
-          : "許諾に同意して進みます…"
-      );
+      await toastForAgree(settings);
       agreeImg.click();
       return true;
     }
@@ -75,11 +85,7 @@
     if (form && eventType) {
       await armAssistIfNeeded(settings);
       eventType.value = "agree";
-      showToast(
-        settings.autoOpenAfterConsent !== false
-          ? "許諾に同意し、保存記事のオープンへ進みます…"
-          : "許諾に同意して進みます…"
-      );
+      await toastForAgree(settings);
       form.submit();
       return true;
     }

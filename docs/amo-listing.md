@@ -114,6 +114,14 @@ Homepage: https://ayamoke.github.io/T-Kong/
 Source: https://github.com/AyaMoke/T-Kong
 ```
 
+### バージョンノート（0.3.6 提出時の例）
+
+```
+- Firefox メニュー（アドオン）に「日経テレコン(きょうの新聞)」を追加
+- タップで iSPEED 起動を促し、同意後にきょうの新聞へ進む
+- 未ログイン前提の手順を README に記載
+```
+
 ### バージョンノート（0.3.5 提出時の例）
 
 ```

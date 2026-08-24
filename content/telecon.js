@@ -3,6 +3,8 @@
 
   const TOAST_ID = "t-kong-toast";
   const BUTTON_ID = "t-kong-telecon-button";
+  const OPEN_TODAY_KEY = "tKongOpenTodayNewspaper";
+  const MSG_OPEN_TODAY = "tKongOpenTodayNewspaper";
   const {
     ARTICLE_KEY,
     PHASE_KEY,
@@ -255,6 +257,111 @@
     await searchByTitle(article);
   }
 
+  function normalizeMenuText(raw) {
+    return String(raw || "").replace(/\s+/gu, "").trim();
+  }
+
+  function isTodayNewspaperText(raw) {
+    const text = normalizeMenuText(raw);
+    return text.includes("きょうの新聞") || text.includes("今日の新聞");
+  }
+
+  function findTodayNewspaperControl() {
+    const byText = [
+      ...document.querySelectorAll("a, button, [role='menuitem'], [role='link'], [role='button']"),
+    ].find((el) => isTodayNewspaperText(el.textContent));
+    if (byText) return byText;
+
+    return (
+      [
+        ...document.querySelectorAll(
+          "a[href*='ATCB012'], a[href*='atcb012'], a[href*='LATCA012'], a[href*='latca012']"
+        ),
+      ][0] || null
+    );
+  }
+
+  function findMenuToggle() {
+    const labeled = [
+      ...document.querySelectorAll("button, a, [role='button'], summary"),
+    ].find((el) => {
+      const label = [
+        el.getAttribute("aria-label"),
+        el.getAttribute("title"),
+        el.textContent,
+      ]
+        .filter(Boolean)
+        .join(" ");
+      if (isTodayNewspaperText(label)) return false;
+      return /メニュー|menu|hamburger|nav/i.test(label);
+    });
+    if (labeled) return labeled;
+
+    // 右上付近のハンバーガーっぽい操作要素（テキストが短いもの）
+    const headerCandidates = [
+      ...document.querySelectorAll("header button, header a, .header button, .header a, nav button"),
+    ].filter((el) => {
+      const text = normalizeMenuText(el.textContent);
+      return text.length <= 2 || /≡|☰|メニュー/.test(el.textContent || "");
+    });
+    return headerCandidates[headerCandidates.length - 1] || null;
+  }
+
+  async function openTodayNewspaper() {
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      let link = findTodayNewspaperControl();
+      if (!link) {
+        const toggle = findMenuToggle();
+        if (toggle) {
+          try {
+            toggle.click();
+          } catch (_error) {
+            // ignore
+          }
+          await sleep(450);
+          link = findTodayNewspaperControl();
+        }
+      }
+
+      if (link) {
+        await browser.storage.local.remove(OPEN_TODAY_KEY);
+        showToast("きょうの新聞を開きます…");
+        console.info("[T-Kong] open today newspaper");
+
+        const href = link.getAttribute?.("href");
+        if (
+          link.tagName === "A" &&
+          href &&
+          href !== "#" &&
+          !href.startsWith("javascript:")
+        ) {
+          location.assign(link.href);
+          return true;
+        }
+
+        try {
+          link.click();
+          return true;
+        } catch (_error) {
+          showToast("「きょうの新聞」を開けませんでした");
+          return false;
+        }
+      }
+
+      await sleep(400);
+    }
+
+    showToast("「きょうの新聞」が見つかりませんでした。メニューから開いてください");
+    console.info("[T-Kong] today newspaper not found");
+    return false;
+  }
+
+  async function consumeOpenTodayRequest() {
+    const data = await browser.storage.local.get(OPEN_TODAY_KEY);
+    if (!data[OPEN_TODAY_KEY]) return false;
+    return openTodayNewspaper();
+  }
+
   async function mountButton() {
     const settings = await getSettings();
     const article = await getFreshPendingArticle();
@@ -322,10 +429,18 @@
   async function init() {
     if (await completePendingIfOpened()) {
       await mountButton();
-      return;
+    } else {
+      await mountButton();
     }
 
-    await mountButton();
+    if (!(await consumeOpenTodayRequest())) {
+      const pendingToday = await browser.storage.local.get(OPEN_TODAY_KEY);
+      if (pendingToday[OPEN_TODAY_KEY]) {
+        setTimeout(() => {
+          consumeOpenTodayRequest();
+        }, 1500);
+      }
+    }
 
     const article = await getFreshPendingArticle();
     const data = await browser.storage.local.get(PHASE_KEY);
@@ -334,6 +449,11 @@
 
     await continueAssistedFlow();
   }
+
+  browser.runtime.onMessage.addListener((message) => {
+    if (message?.type !== MSG_OPEN_TODAY) return;
+    return openTodayNewspaper();
+  });
 
   init();
   new MutationObserver(() => {
