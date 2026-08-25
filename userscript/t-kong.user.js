@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         T-Kong for iPhone
-// @namespace    https://github.com/ayamoke/T-Kong
+// @namespace    https://github.com/AyaMoke/T-Kong-iPhone
 // @version      0.5.6
 // @description  iPhone向け。日経記事タイトルを端末内に一時記録し、楽天証券版日経テレコンでの同一記事検索を補助する非公式スクリプトです（Android拡張とは別）。
 // @author       AyaMoke

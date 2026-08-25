@@ -20,10 +20,10 @@ iPad でも同じスクリプトで動作確認済みです（詳細は [導入�
 |  | 場所 |
 | --- | --- |
 | 本体 | `userscript/t-kong.user.js` |
-| 導入サポート | [docs/index.html](./docs/index.html)（[GitHub Pages](https://ayamoke.github.io/T-Kong/)） |
+| 導入サポート | [docs/index.html](./docs/index.html)（[GitHub Pages](https://ayamoke.github.io/T-Kong-iPhone/)） |
 
 インストール用 raw:
-`https://raw.githubusercontent.com/AyaMoke/T-Kong/main/userscript/t-kong.user.js`
+`https://raw.githubusercontent.com/AyaMoke/T-Kong-iPhone/main/userscript/t-kong.user.js`
 
 ## ライセンス
 
