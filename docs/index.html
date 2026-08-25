@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>T-Kong</title>
+    <title>T-Kong for iPhone — 導入サポート</title>
     <meta
       name="description"
-      content="日経電子版から楽天証券版日経テレコンへ、同一記事探しを補助する非公式Firefox拡張。"
+      content="iPhoneのSafari向け非公式Userscript。日経記事の手がかりを一時記録し、楽天証券版日経テレコンでの同一記事探しを補助。AndroidはFirefox拡張を推奨。"
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -22,6 +22,7 @@
 
     <header class="hero">
       <p class="brand">T-Kong</p>
+      <p class="brand-sub">for iPhone</p>
       <h1 class="tagline">電子版の記事から、<br />テレコンへつなぐ。</h1>
       <div class="hero-visual">
         <picture>
@@ -33,24 +34,20 @@
           <img
             class="hero-shot"
             src="media/hero.webp"
-            width="900"
-            height="1488"
-            alt="日経記事画面に「テレコンで読む」ボタンが表示されている様子"
+            width="544"
+            height="1024"
+            alt="「テレコンで読む」ボタンが目立って表示された日経記事画面"
             decoding="async"
             fetchpriority="high"
           />
         </picture>
       </div>
       <p class="lead">
-        非公式の Firefox for Android 拡張。端末内だけにタイトルを保存し、楽天証券版日経テレコンでの同一記事探しを補助します。
+        <strong>T-Kong for iPhone</strong> — iPhone（Safari）向けの非公式 Userscript です。記事タイトルなどを端末内に一時記録し、楽天証券版日経テレコンでの同一記事探しを補助します。Android の Firefox 拡張版とは別物です。
       </p>
       <div class="actions">
-        <a
-          class="btn primary"
-          href="https://addons.mozilla.org/ja/android/addon/t-kong/"
-          >Firefox に追加</a
-        >
-        <a class="btn ghost" href="https://github.com/AyaMoke/T-Kong">GitHub</a>
+        <a class="btn primary" href="#install-ios">iPhone に入れる</a>
+        <a class="btn ghost" href="#install-android">Android の方へ</a>
       </div>
     </header>
 
@@ -61,14 +58,14 @@
           <figure>
             <img
               src="media/step-1.webp"
-              width="720"
-              height="1190"
-              alt="日経電子版の記事に「テレコンで読む」ボタンが表示された画面"
+              width="544"
+              height="1024"
+              alt="「テレコンで読む」ボタンが強調表示された画面"
               loading="lazy"
               decoding="async"
             />
             <figcaption>
-              <strong>1. 保存</strong>
+              <strong>1. 一時記録</strong>
               nikkei.com で「テレコンで読む」
             </figcaption>
           </figure>
@@ -77,9 +74,9 @@
           <figure>
             <img
               src="media/step-2.webp"
-              width="720"
-              height="980"
-              alt="iSPEEDのメニュー内マーケットにある日経テレコンボタン"
+              width="544"
+              height="1024"
+              alt="iSPEEDのマーケット画面で日経テレコンが強調されている様子"
               loading="lazy"
               decoding="async"
             />
@@ -93,37 +90,185 @@
           <figure>
             <img
               src="media/step-3.webp"
-              width="720"
-              height="1190"
-              alt="日経テレコンで同一記事の本文が表示された画面"
+              width="544"
+              height="1024"
+              alt="日経テレコンのニュース画面（本文はぼかし）"
               loading="lazy"
               decoding="async"
             />
             <figcaption>
               <strong>3. 本文</strong>
-              保存タイトルで検索・オープンを補助
+              一時記録をもとに検索・オープンを補助
             </figcaption>
           </figure>
         </li>
       </ol>
     </section>
 
-    <section class="strip" aria-label="要点">
-      <p><strong>保存</strong> 端末内だけにタイトルを保持</p>
-      <p><strong>補助</strong> 許諾・検索・見出しオープン</p>
-      <p><strong>方針</strong> 認証情報は扱わない</p>
+    <section class="guide" id="install">
+      <h2 class="guide-title">導入手順</h2>
+      <p class="guide-lead">
+        本線は <code>t-kong.user.js</code>（<strong>iPhone の Safari</strong>）です。Android では別配布の
+        <strong>Firefox 拡張</strong>を使ってください。
+      </p>
+
+      <article class="guide-card" id="install-ios">
+        <h3>T-Kong for iPhone（Safari + Userscripts）</h3>
+        <p class="guide-note">
+          App Store の
+          <a href="https://apps.apple.com/app/userscripts/id1463298887">Userscripts</a>
+          を使います。日経→テレコンの引き継ぎにはマネージャの <strong>GM ストレージ</strong>が必要です。楽天証券アプリは
+          <a href="https://apps.apple.com/jp/app/ispeed-%E6%A5%BD%E5%A4%A9%E8%A8%BC%E5%88%B8%E3%81%AE%E6%A0%AA%E3%82%A2%E3%83%97%E3%83%AA/id389339704">iSPEED</a>
+          を用意してください。
+        </p>
+
+        <h4>A. いちばん簡単（URLから入れる）</h4>
+        <ol class="guide-steps">
+          <li>
+            Safari で次のリンクを開く（パスが <code>.user.js</code> で終わること）:<br />
+            <a
+              class="mono-link"
+              href="https://raw.githubusercontent.com/AyaMoke/T-Kong/main/userscript/t-kong.user.js"
+              >raw.githubusercontent.com/.../t-kong.user.js</a
+            >
+          </li>
+          <li>アドレスバー横の <strong>拡張機能</strong> → <strong>Userscripts</strong> を開く</li>
+          <li>インストール確認が出たら追加する</li>
+          <li>
+            <strong>設定 → アプリ → Safari → 拡張機能 → Userscripts</strong> をオンにし、必要なサイトへのアクセスを許可する
+          </li>
+          <li>
+            日経の記事ページ（<code>nikkei.com/article/...</code>）を開き、「テレコンで読む」が出るか確認
+          </li>
+        </ol>
+        <p class="guide-note">
+          インストール用URL（Safari で開く）:
+          <a
+            class="mono-link"
+            href="https://raw.githubusercontent.com/AyaMoke/T-Kong/main/userscript/t-kong.user.js"
+            >raw.githubusercontent.com/.../userscript/t-kong.user.js</a
+          >
+        </p>
+
+        <h4>B. Google Drive などからファイルで入れる</h4>
+        <ol class="guide-steps">
+          <li>Userscripts アプリを一度開き、保存フォルダを確認する（「このiPhone内」推奨）</li>
+          <li><code>t-kong.user.js</code> を Drive 等から端末へ渡す</li>
+          <li>
+            <strong>ファイル</strong>アプリで、Userscripts のフォルダ（またはアプリで指定したフォルダ）へコピーする
+          </li>
+          <li>Userscripts アプリを開き直す → Safari の Userscripts 一覧でスクリプトを ON</li>
+          <li>日経記事でボタン表示を確認</li>
+        </ol>
+        <p class="guide-note">
+          Drive の保存先に「Userscripts」が出ないときは、<strong>このiPhone内</strong>に自作フォルダを作り、Userscripts アプリ側でそのフォルダを保存場所に指定してください。Drive / iCloud 直下を保存場所にすると不安定になりがちです。
+        </p>
+
+        <h4>iPad で使う場合</h4>
+        <p class="guide-note">
+          手順は iPhone と同じです。実機確認は iPad でも行っており、一連の補助まで動くことを確認しています。楽天証券アプリは
+          <a href="https://apps.apple.com/jp/app/ispeed-for-ipad-%E6%A5%BD%E5%A4%A9%E8%A8%BC%E5%88%B8%E3%81%AE%E6%A0%AA%E3%82%A2%E3%83%97%E3%83%AA/id421798565">iSPEED for iPad</a>
+          （iPhone 用とは別）を使ってください。ファイル保存先の表記は「このiPad内」になります。
+        </p>
+      </article>
+
+      <article class="guide-card" id="install-android">
+        <h3>Android — Firefox 拡張を推奨</h3>
+        <p class="guide-note">
+          Android では Userscript より、配布済みの
+          <strong>Firefox for Android 拡張（AMO）</strong>の方が向いています。インストールも更新も楽です。
+        </p>
+        <ol class="guide-steps">
+          <li>端末に <strong>Firefox</strong> を入れる（目安: 142 以降）</li>
+          <li>
+            スマホの Firefox で
+            <a href="https://addons.mozilla.org/ja/android/addon/t-kong/">T-Kong（AMO）</a>
+            を開き、<strong>Firefox へ追加</strong>
+          </li>
+          <li>日経記事で「テレコンで読む」が出るか確認</li>
+        </ol>
+        <p class="guide-note">
+          既定ブラウザを Firefox にしておくと、Discover などからも記事が Firefox 側に渡りやすくなります。
+        </p>
+      </article>
+    </section>
+
+    <section class="guide" id="usage">
+      <h2 class="guide-title">使い方</h2>
+      <ol class="guide-steps">
+        <li>nikkei.com トップで「きょうの新聞」→ iSPEED → テレコン経由できょうの新聞</li>
+        <li>nikkei.com の記事で「テレコンで読む」→ タイトルなどを<strong>一時記録</strong></li>
+        <li>iSPEED が開いたら、メニュー → マーケット → <strong>日経テレコン</strong></li>
+        <li>許諾画面（自動同意は既定 ON。オフ可）</li>
+        <li>テレコン側で検索〜本文オープンを補助（手動ボタンは「記録した記事を開く」）</li>
+      </ol>
+      <p class="guide-note">
+        Userscripts のメニューから <strong>T-Kong for iPhone: 設定</strong>、<strong>きょうの新聞</strong> も使えます。
+      </p>
+    </section>
+
+    <section class="guide" id="trouble">
+      <h2 class="guide-title">うまくいかないとき</h2>
+      <dl class="trouble">
+        <div>
+          <dt>一覧でスクリプトが灰色</dt>
+          <dd>
+            タップして ON にする。日経の<strong>記事URL</strong>を開いた状態で一覧を見直す。ファイル名が
+            <code>.user.js</code> か、中身の先頭が <code>==UserScript==</code> か確認。
+          </dd>
+        </div>
+        <div>
+          <dt>ボタンは出るが、テレコン側で記録が消える</dt>
+          <dd>
+            GM ストレージ未対応のマネージャ／権限不足の可能性。Userscripts や Violentmonkey で
+            <code>GM.setValue</code> 系が使える状態か確認。
+          </dd>
+        </div>
+        <div>
+          <dt>アプリ起動のあとストアの「入手不可能」へ飛ぶ</dt>
+          <dd>
+            古いスクリプトの自動フォールバックが原因のことがあります。最新の
+            <code>t-kong.user.js</code>（0.5.1以降）に差し替えてください。
+          </dd>
+        </div>
+        <div>
+          <dt>「この操作を継続できません」と出る</dt>
+          <dd>
+            セッション切れです。画面の <strong>再ログインする</strong> から iSPEED
+            を開き、ログイン → 日経テレコンへ入り直してください。
+          </dd>
+        </div>
+        <div>
+          <dt>Drive から「このiPhone内 → Userscripts」が出ない</dt>
+          <dd>
+            ファイルアプリで「このiPhone内」（iPad なら「このiPad内」）を表示オンにする。自作フォルダへ保存し、Userscripts
+            アプリでその場所を指定する。
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="guide" id="privacy">
+      <h2 class="guide-title">やること / やらないこと</h2>
+      <ul class="guide-list">
+        <li>記事ID・タイトル・URLなどの<strong>一時記録</strong>（端末内、目安24時間）</li>
+        <li>許諾クリック・検索・見出しオープンの補助（設定でオフ可）</li>
+        <li>ログイン代行、ID/パスワード、Cookie、SSO、有料本文の取得・保管は<strong>しません</strong></li>
+        <li>T-Kong 独自サーバーへの送信はしません</li>
+      </ul>
     </section>
 
     <section class="note">
       <h2>ご注意</h2>
       <p>
-        日経・楽天証券の公式ではありません。すでに楽天証券版日経テレコンを正規利用できる方向けです。T-Kong独自サーバーへの送信はありません。対象サイトとの通常のHTTPS通信は発生します。利用は自己責任で、各サービスの規約を守ってください。
+        日経・楽天証券の公式ではありません。すでに楽天証券版日経テレコンを正規利用できる方向けです。対象サイトとの通常のHTTPS通信は発生します。利用は自己責任で、各サービスの規約を守ってください。
       </p>
     </section>
 
     <footer>
-      <a href="https://addons.mozilla.org/ja/android/addon/t-kong/">AMO</a>
-      <a href="https://github.com/AyaMoke/T-Kong">AyaMoke/T-Kong</a>
+      <a href="https://github.com/AyaMoke/T-Kong">GitHub</a>
+      <a href="https://github.com/AyaMoke/T-Kong/blob/main/userscript/t-kong.user.js">t-kong.user.js</a>
+      <a href="https://addons.mozilla.org/ja/android/addon/t-kong/">Android（AMO）</a>
       <span>MIT License</span>
     </footer>
 

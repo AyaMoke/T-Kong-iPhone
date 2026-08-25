@@ -30,4 +30,5 @@
 
   observeIn(".strip p");
   observeIn(".flow-item");
+  observeIn(".guide-card");
 })();

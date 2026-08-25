@@ -43,6 +43,7 @@ body {
 .hero,
 .flow,
 .strip,
+.guide,
 .note,
 footer {
   position: relative;
@@ -74,6 +75,19 @@ footer {
   opacity: 0;
   transform: translateY(18px);
   animation: rise 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.05s forwards;
+}
+
+.brand-sub {
+  margin: 0.15rem 0 0;
+  font-family: "Instrument Sans", sans-serif;
+  font-size: clamp(1.55rem, 5.5vw, 2.35rem);
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+  color: var(--accent-ink);
+  opacity: 0;
+  transform: translateY(14px);
+  animation: rise 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.12s forwards;
 }
 
 .tagline {
@@ -171,18 +185,19 @@ footer {
 }
 
 .flow {
-  padding: 0.5rem clamp(1.5rem, 5vw, 3.5rem) 2.75rem;
+  padding: 0 clamp(1.5rem, 5vw, 3.5rem) 2rem;
   max-width: 72rem;
   margin: 0 auto;
 }
 
 .flow-title {
   margin: 0 0 1.25rem;
-  font-size: 0.95rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--muted);
-  font-weight: 600;
+  font-family: "Newsreader", serif;
+  font-size: clamp(1.55rem, 4.5vw, 2rem);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .flow-list {
@@ -235,7 +250,7 @@ footer {
 .strip {
   display: grid;
   gap: 1rem;
-  padding: 0 clamp(1.5rem, 5vw, 3.5rem) 2.5rem;
+  padding: 0 clamp(1.5rem, 5vw, 3.5rem) 1.25rem;
   max-width: 52rem;
   margin: 0 auto;
 }
@@ -267,13 +282,147 @@ footer {
   max-width: 40rem;
 }
 
+.guide {
+  position: relative;
+  z-index: 1;
+  margin: 0 auto 2.75rem;
+  padding: 0 clamp(1.5rem, 5vw, 3.5rem);
+  max-width: 40rem;
+}
+
+#install.guide {
+  padding-top: 2.75rem;
+  margin-top: 0.75rem;
+}
+
+.guide-title {
+  margin: 0 0 0.85rem;
+  font-family: "Newsreader", serif;
+  font-size: clamp(1.55rem, 4.5vw, 2rem);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.guide-lead {
+  margin: 0 0 1.25rem;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.guide-card {
+  margin: 0 0 1.25rem;
+  padding: 1.1rem 1.05rem 1.15rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--panel);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  transform: translateY(14px);
+}
+
+.guide-card.is-in {
+  animation: rise 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.guide-card h3 {
+  margin: 0 0 0.55rem;
+  font-size: clamp(1.2rem, 3.5vw, 1.4rem);
+  font-family: "Newsreader", serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.guide-card h4 {
+  margin: 1.1rem 0 0.45rem;
+  font-size: 0.98rem;
+  color: var(--ink);
+}
+
+.guide-note {
+  margin: 0.65rem 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.guide-note a,
+.guide-card a {
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.guide-steps {
+  margin: 0.35rem 0 0;
+  padding-left: 1.2rem;
+  color: var(--ink);
+  line-height: 1.55;
+}
+
+.guide-steps li {
+  margin: 0.45rem 0;
+}
+
+.guide-list {
+  margin: 0.35rem 0 0;
+  padding-left: 1.2rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.guide-list li {
+  margin: 0.35rem 0;
+}
+
+.mono-link {
+  word-break: break-all;
+  font-size: 0.88rem;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88em;
+  padding: 0.08em 0.28em;
+  border-radius: 0.3rem;
+  background: rgba(18, 32, 43, 0.06);
+}
+
+.trouble {
+  margin: 0;
+}
+
+.trouble > div {
+  padding: 0.85rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.trouble > div:first-child {
+  border-top: 0;
+  padding-top: 0.15rem;
+}
+
+.trouble dt {
+  margin: 0 0 0.3rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.trouble dd {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+  font-size: 0.95rem;
+}
+
 .note h2 {
   margin: 0 0 0.55rem;
-  font-size: 0.95rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--muted);
-  font-weight: 600;
+  font-family: "Newsreader", serif;
+  font-size: clamp(1.35rem, 4vw, 1.75rem);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .note p {
@@ -328,19 +477,26 @@ footer a:hover {
     grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
     grid-template-areas:
       "brand visual"
+      "brand-sub visual"
       "tagline visual"
       "lead visual"
       "actions visual";
     column-gap: 2.5rem;
-    row-gap: 0.85rem;
+    row-gap: 0.55rem;
     align-items: center;
-    padding-block: clamp(2rem, 6vw, 4rem);
+    padding-block: clamp(1.5rem, 5vw, 3.25rem) clamp(1.25rem, 3vw, 2rem);
   }
 
   .brand {
     grid-area: brand;
     align-self: end;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0;
+  }
+
+  .brand-sub {
+    grid-area: brand-sub;
+    align-self: start;
+    margin-top: 0;
   }
 
   .tagline {
@@ -385,7 +541,7 @@ footer a:hover {
   }
 
   .strip {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 1.25rem;
     max-width: 72rem;
   }
@@ -406,13 +562,18 @@ footer a:hover {
   .hero {
     min-height: auto;
     padding-top: max(1.25rem, env(safe-area-inset-top));
-    padding-bottom: 1.25rem;
+    padding-bottom: 0.65rem;
     gap: 1.25rem;
   }
 
   .brand {
     font-size: clamp(2.6rem, 14vw, 3.6rem);
-    margin-bottom: 0.75rem;
+    margin-bottom: 0;
+  }
+
+  .brand-sub {
+    margin: 0.25rem 0 0.65rem;
+    font-size: clamp(1.45rem, 7vw, 2rem);
   }
 
   .tagline {
