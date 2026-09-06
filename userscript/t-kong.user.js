@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         T-Kong for iPhone
 // @namespace    https://github.com/AyaMoke/T-Kong-iPhone
-// @version      0.6.6
+// @version      0.7.0
 // @description  iPhone向け。日経記事タイトルを端末内に一時記録し、楽天証券版日経テレコンでの同一記事検索を補助する非公式スクリプトです（Android拡張とは別）。
 // @author       AyaMoke
 // @match        https://www.nikkei.com/
@@ -358,17 +358,16 @@
     return "";
   }
 
-  function parseNikkeiArticleUrl(rawUrl) {
+  function parseNikkeiArticleUrl(rawUrl, capturedDate = new Date()) {
     try {
       const urlStr = String(rawUrl || "");
       const match = urlStr.match(/\/article\/([A-Za-z0-9_-]+)/);
       if (!match) return null;
 
       const fullArticleId = match[1];
-      if (fullArticleId.length < 28) return null;
+      if (fullArticleId.length < 14) return null;
 
       const coreArticleId = fullArticleId.slice(0, 14);
-      const suffix = fullArticleId.slice(14, 28);
 
       // Day: Core Article ID のインデックス 8..9（2桁）
       const dayStr = coreArticleId.slice(8, 10);
@@ -377,28 +376,40 @@
 
       let dateSuffix = "";
 
-      // パターンA: 8桁の日付 (DDMMYYYY) で始まっている場合
-      if (/^\d{8}/.test(suffix)) {
-        const datePart = suffix.slice(0, 8);
-        dateSuffix = `${datePart}000000`;
-      } else {
-        // パターンB: トラッキングサフィックス (T00C26A9000000, W6A820C2000000 等)
-        const trackingMatch = suffix.match(/(\d{1,4})A(0?[1-9]|1[0-2])/);
-        if (!trackingMatch) return null;
+      if (fullArticleId.length >= 28) {
+        const suffix = fullArticleId.slice(14, 28);
 
-        let yearNum = parseInt(trackingMatch[1], 10);
-        const monthNum = parseInt(trackingMatch[2], 10);
+        // パターンA: 8桁の日付 (DDMMYYYY) で始まっている場合
+        if (/^\d{8}/.test(suffix)) {
+          const datePart = suffix.slice(0, 8);
+          dateSuffix = `${datePart}000000`;
+        } else {
+          // パターンB: トラッキングサフィックス (T00C26A9000000, W6A820C2000000 等)
+          const trackingMatch = suffix.match(/(\d{1,4})A(0?[1-9]|1[0-2])/);
+          if (trackingMatch) {
+            let yearNum = parseInt(trackingMatch[1], 10);
+            const monthNum = parseInt(trackingMatch[2], 10);
 
-        if (yearNum < 10) {
-          yearNum = 2020 + yearNum;
-        } else if (yearNum < 100) {
-          yearNum = 2000 + yearNum;
+            if (yearNum < 10) {
+              yearNum = 2020 + yearNum;
+            } else if (yearNum < 100) {
+              yearNum = 2000 + yearNum;
+            }
+
+            const formattedDay = String(day).padStart(2, "0");
+            const formattedMonth = String(monthNum).padStart(2, "0");
+            const formattedYear = String(yearNum).padStart(4, "0");
+
+            dateSuffix = `${formattedDay}${formattedMonth}${formattedYear}000000`;
+          }
         }
+      }
 
+      // パターンC: 短縮ID形式（14文字）またはサフィックス解析不能時の現在年月フォールバック
+      if (!dateSuffix) {
         const formattedDay = String(day).padStart(2, "0");
-        const formattedMonth = String(monthNum).padStart(2, "0");
-        const formattedYear = String(yearNum).padStart(4, "0");
-
+        const formattedMonth = String(capturedDate.getMonth() + 1).padStart(2, "0");
+        const formattedYear = String(capturedDate.getFullYear()).padStart(4, "0");
         dateSuffix = `${formattedDay}${formattedMonth}${formattedYear}000000`;
       }
 
@@ -696,9 +707,9 @@
     await sleep(DIRECT_OPEN_DELAY_MS);
 
     try {
-      clickHref(article.directUrl);
+      window.location.replace(article.directUrl);
     } catch (_error) {
-      location.assign(article.directUrl);
+      window.location.href = article.directUrl;
     }
 
     await sleep(2500);
