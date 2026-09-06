@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         T-Kong for iPhone
 // @namespace    https://github.com/AyaMoke/T-Kong-iPhone
-// @version      0.6.1
+// @version      0.6.2
 // @description  iPhone向け。日経記事タイトルを端末内に一時記録し、楽天証券版日経テレコンでの同一記事検索を補助する非公式スクリプトです（Android拡張とは別）。
 // @author       AyaMoke
 // @match        https://www.nikkei.com/
@@ -478,8 +478,16 @@
     } else {
       await storageRemove(PHASE_KEY);
     }
-    showToast(`一時記録しました: ${article.title}`, "130px");
-    console.info("[T-Kong] saved", { articleId: article.articleId, title: article.title });
+    if (article.directUrl && settings.enableDirectLink !== false) {
+      showToast(`一時記録しました（直行リンク準備OK）: ${article.title}`, "130px");
+    } else {
+      showToast(`一時記録しました（タイトル検索）: ${article.title}`, "130px");
+    }
+    console.info("[T-Kong] saved", {
+      articleId: article.articleId,
+      title: article.title,
+      directUrl: article.directUrl,
+    });
 
     if (!hasGmStorage()) {
       showToast(
@@ -646,10 +654,17 @@
   }
 
   function isTeleconArticlePage() {
+    if (isTeleconErrorPage()) return false;
     const href = location.href;
-    if (/LATCA014\.do/i.test(href) || /LATCD015\.do/i.test(href)) return true;
-    if (href.includes("keyBody=") && !document.querySelector("ul.listNews")) return true;
-    return false;
+    const isArticleUrl =
+      /LATCA014\.do/i.test(href) ||
+      /LATCD015\.do/i.test(href) ||
+      (href.includes("keyBody=") && !document.querySelector("ul.listNews"));
+    if (!isArticleUrl) return false;
+
+    const bodyText = String(document.body?.innerText || "");
+    if (bodyText.length < 50) return false;
+    return true;
   }
 
   function isTeleconErrorPage() {
@@ -726,6 +741,36 @@
     return true;
   }
 
+  async function navigateToNewsSearch() {
+    if (isNewsSearchPage()) {
+      if (!isAllNewsSelected()) {
+        return switchToAllNews();
+      }
+      return true;
+    }
+    const select = getGenreSelect();
+    const option = select ? findAllNewsOption(select) : null;
+    const link = [
+      ...document.querySelectorAll(
+        "a[href*='genreCode=ALL'], a[href*='LATCA011'], a[href*='p03']"
+      ),
+    ].find(
+      (anchor) =>
+        isAllNewsLabel(anchor.textContent) || /ニュース/i.test(anchor.textContent || "")
+    );
+    const target = option?.value || link?.getAttribute("href");
+    if (target) {
+      await storageSet({ [PHASE_KEY]: PHASE_SEARCH });
+      showToast("ニュース検索へ切り替えます…");
+      location.assign(target);
+      return true;
+    }
+    await storageSet({ [PHASE_KEY]: PHASE_SEARCH });
+    showToast("全ニュース画面を開きます…");
+    location.assign("https://t21.nikkei.co.jp/g3/p03/LATCA011.do?genreCode=ALL");
+    return true;
+  }
+
   async function findResultLink(article, settings) {
     const links = getResultLinks();
     if (!links.length) return null;
@@ -755,6 +800,7 @@
     if (!article?.title) return false;
     if (phase !== PHASE_OPENING && phase !== PHASE_DIRECT && phase !== PHASE_ASSIST) return false;
     if (!isTeleconArticlePage()) return false;
+    if (isTeleconErrorPage()) return false;
     await storageRemove([ARTICLE_KEY, PHASE_KEY]);
     console.info("[T-Kong] pending completed");
     showToast(`記事を開きました: ${article.title}`);
@@ -1064,14 +1110,8 @@
             console.info("[T-Kong] direct link resulted in error, fallback to search");
             showToast("ダイレクト表示不可のため、タイトル検索に切り替えます…");
             await storageSet({ [PHASE_KEY]: PHASE_SEARCH });
-            if (isNewsSearchPage()) {
-              if (!isAllNewsSelected()) {
-                await switchToAllNews();
-              } else {
-                await searchByTitle(article);
-              }
-              return;
-            }
+            await navigateToNewsSearch();
+            return;
           }
         } else {
           directWaitCount += 1;
@@ -1086,6 +1126,9 @@
                 } else {
                   await searchByTitle(article);
                 }
+                return;
+              } else {
+                await navigateToNewsSearch();
                 return;
               }
             }
