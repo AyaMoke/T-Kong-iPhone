@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         T-Kong for iPhone
 // @namespace    https://github.com/AyaMoke/T-Kong-iPhone
-// @version      0.6.5
+// @version      0.6.6
 // @description  iPhone向け。日経記事タイトルを端末内に一時記録し、楽天証券版日経テレコンでの同一記事検索を補助する非公式スクリプトです（Android拡張とは別）。
 // @author       AyaMoke
 // @match        https://www.nikkei.com/
@@ -694,7 +694,13 @@
     showToast("記事へダイレクト遷移します…");
     console.info("[T-Kong] direct open requested", article.directUrl);
     await sleep(DIRECT_OPEN_DELAY_MS);
-    location.assign(article.directUrl);
+
+    try {
+      clickHref(article.directUrl);
+    } catch (_error) {
+      location.assign(article.directUrl);
+    }
+
     await sleep(2500);
     return true;
   }
