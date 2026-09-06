@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         T-Kong for iPhone
 // @namespace    https://github.com/AyaMoke/T-Kong-iPhone
-// @version      0.5.6
+// @version      0.6.0
 // @description  iPhone向け。日経記事タイトルを端末内に一時記録し、楽天証券版日経テレコンでの同一記事検索を補助する非公式スクリプトです（Android拡張とは別）。
 // @author       AyaMoke
 // @match        https://www.nikkei.com/
@@ -32,6 +32,7 @@
   const STORE_PREFIX = "tKong/";
 
   const DEFAULT_SETTINGS = {
+    enableDirectLink: true,
     autoConsent: true,
     autoOpenAfterConsent: true,
     autoClickResult: true,
@@ -58,6 +59,7 @@
     encodeURIComponent(PLAY_URL) +
     ";end";
 
+  const PHASE_DIRECT = "direct";
   const PHASE_SEARCH = "search";
   const PHASE_OPEN = "openResult";
   const PHASE_ASSIST = "assist";
@@ -271,6 +273,7 @@
   // --- settings panel ---
 
   const SETTING_FIELDS = [
+    ["enableDirectLink", "URLから記事本文へダイレクト遷移（推奨: ON）"],
     ["openBrokerAppAfterSave", "一時記録のあと楽天証券アプリ（iSPEED）の起動を促す"],
     ["autoConsent", "許諾画面の「同意する」を自動クリック（推奨: ON）"],
     ["autoOpenAfterConsent", "同意後に一時記録した記事を自動オープン"],
@@ -351,6 +354,63 @@
     return "";
   }
 
+  function parseNikkeiArticleUrl(rawUrl) {
+    try {
+      const urlStr = String(rawUrl || "");
+      const match = urlStr.match(/\/article\/([A-Za-z0-9_]+)/);
+      if (!match) return null;
+
+      const fullArticleId = match[1];
+      if (fullArticleId.length < 28) return null;
+
+      const coreArticleId = fullArticleId.slice(0, 14);
+      const suffix = fullArticleId.slice(14, 28);
+
+      // Day: Core Article ID のインデックス 8..9（2桁）
+      const dayStr = coreArticleId.slice(8, 10);
+      const day = parseInt(dayStr, 10);
+      if (Number.isNaN(day) || day < 1 || day > 31) return null;
+
+      let dateSuffix = "";
+
+      // パターンA: 標準の日付サフィックス (DDMMYYYY000000)
+      if (/^\d{8}000000$/.test(suffix)) {
+        dateSuffix = suffix;
+      } else {
+        // パターンB: トラッキングサフィックス (T00C26A9000000, W6A820C2000000 等)
+        const trackingMatch = suffix.match(/(\d{1,4})A(0?[1-9]|1[0-2])/);
+        if (!trackingMatch) return null;
+
+        let yearNum = parseInt(trackingMatch[1], 10);
+        const monthNum = parseInt(trackingMatch[2], 10);
+
+        if (yearNum < 10) {
+          yearNum = 2020 + yearNum;
+        } else if (yearNum < 100) {
+          yearNum = 2000 + yearNum;
+        }
+
+        const formattedDay = String(day).padStart(2, "0");
+        const formattedMonth = String(monthNum).padStart(2, "0");
+        const formattedYear = String(yearNum).padStart(4, "0");
+
+        dateSuffix = `${formattedDay}${formattedMonth}${formattedYear}000000`;
+      }
+
+      const keyBody = `NKNNWS${coreArticleId}${dateSuffix}\\NKN`;
+      const directUrl = `https://t21.nikkei.co.jp/g3/p03/LATCD015.do?keyBody=${encodeURIComponent(keyBody)}`;
+
+      return {
+        coreArticleId,
+        dateSuffix,
+        keyBody,
+        directUrl,
+      };
+    } catch (_error) {
+      return null;
+    }
+  }
+
   async function getArticleInfo() {
     const match = location.pathname.match(/^\/article\/([^/?#]+)\/?/);
     if (!match) return null;
@@ -362,7 +422,16 @@
       headline ||
       normalizeTitle(ogTitle, settings) ||
       normalizeTitle(document.title, settings);
-    return { articleId, title, url: location.href, capturedAt: new Date().toISOString() };
+    const parsed = parseNikkeiArticleUrl(location.href);
+    return {
+      articleId,
+      title,
+      url: location.href,
+      capturedAt: new Date().toISOString(),
+      directUrl: parsed?.directUrl || null,
+      coreArticleId: parsed?.coreArticleId || null,
+      dateSuffix: parsed?.dateSuffix || null,
+    };
   }
 
   function mountOpenAppButton() {
@@ -567,9 +636,34 @@
 
   function isTeleconArticlePage() {
     const href = location.href;
-    if (/LATCA014\.do/i.test(href)) return true;
+    if (/LATCA014\.do/i.test(href) || /LATCD015\.do/i.test(href)) return true;
     if (href.includes("keyBody=") && !document.querySelector("ul.listNews")) return true;
     return false;
+  }
+
+  function isTeleconErrorPage() {
+    const text = String(document.body?.innerText || document.documentElement?.innerText || "");
+    return (
+      text.includes("該当する記事はありません") ||
+      text.includes("該当記事がありません") ||
+      text.includes("記事が見つかりません") ||
+      text.includes("指定された記事は存在しません") ||
+      text.includes("お探しの記事は見つかりませんでした") ||
+      text.includes("システムエラーが発生しました")
+    );
+  }
+
+  async function tryDirectOpen(article) {
+    if (!article?.directUrl) return false;
+    const settings = await getSettings();
+    if (settings.enableDirectLink === false) return false;
+    if (isTeleconArticlePage()) return false;
+
+    await storageSet({ [PHASE_KEY]: PHASE_DIRECT });
+    showToast("記事へダイレクト遷移します…");
+    console.info("[T-Kong] direct open requested", article.directUrl);
+    location.assign(article.directUrl);
+    return true;
   }
 
   function getResultLinks() {
@@ -645,10 +739,12 @@
     const data = await storageGet([ARTICLE_KEY, PHASE_KEY]);
     const article = data[ARTICLE_KEY];
     const phase = data[PHASE_KEY];
-    if (!article?.title || phase !== PHASE_OPENING) return false;
+    if (!article?.title) return false;
+    if (phase !== PHASE_OPENING && phase !== PHASE_DIRECT && phase !== PHASE_ASSIST) return false;
     if (!isTeleconArticlePage()) return false;
     await storageRemove([ARTICLE_KEY, PHASE_KEY]);
     console.info("[T-Kong] pending completed");
+    showToast(`記事を開きました: ${article.title}`);
     return true;
   }
 
@@ -707,10 +803,25 @@
     const article = await getFreshPendingArticle();
     const data = await storageGet(PHASE_KEY);
     const phase = data[PHASE_KEY];
+    const settings = await getSettings();
 
     if (!article?.title) {
       showToast("一時記録がありません。nikkei.comで先に記録してください");
       return;
+    }
+    if (isTeleconArticlePage()) {
+      await completePendingIfOpened();
+      return;
+    }
+    if (
+      settings.enableDirectLink !== false &&
+      article.directUrl &&
+      phase !== PHASE_SEARCH &&
+      phase !== PHASE_OPEN &&
+      phase !== PHASE_DIRECT
+    ) {
+      const opened = await tryDirectOpen(article);
+      if (opened) return;
     }
     if (phase === PHASE_OPEN && getResultLinks().length) {
       await openMatchingResult(article);
@@ -728,7 +839,8 @@
       auto &&
       phase !== PHASE_SEARCH &&
       phase !== PHASE_OPEN &&
-      phase !== PHASE_ASSIST
+      phase !== PHASE_ASSIST &&
+      phase !== PHASE_DIRECT
     ) {
       return;
     }
@@ -925,12 +1037,49 @@
       const phase = data[PHASE_KEY];
       if (!article?.title) return;
       if (!phase) return;
+
+      if (phase === PHASE_OPENING || phase === PHASE_DIRECT || phase === PHASE_ASSIST) {
+        if (await completePendingIfOpened()) return;
+      }
+
+      if (phase === PHASE_DIRECT) {
+        if (isTeleconErrorPage() || isNewsSearchPage()) {
+          console.info("[T-Kong] direct link failed or redirected, falling back to search");
+          showToast("ダイレクト表示不可のため、タイトル検索に切り替えます…");
+          await storageSet({ [PHASE_KEY]: PHASE_SEARCH });
+          if (isNewsSearchPage()) {
+            if (!isAllNewsSelected()) {
+              await switchToAllNews();
+            } else {
+              await searchByTitle(article);
+            }
+            return;
+          }
+        }
+        await sleep(500);
+        continue;
+      }
+
+      if (phase === PHASE_ASSIST) {
+        if (settings.autoOpenAfterConsent === false) return;
+        if (settings.enableDirectLink !== false && article.directUrl) {
+          const opened = await tryDirectOpen(article);
+          if (opened) return;
+        }
+        if (isNewsSearchPage()) {
+          await runAssist({ auto: true });
+          return;
+        }
+        await sleep(500);
+        continue;
+      }
+
       if (phase === PHASE_OPENING) {
         if (await completePendingIfOpened()) return;
         await sleep(500);
         continue;
       }
-      if (phase === PHASE_ASSIST && settings.autoOpenAfterConsent === false) return;
+
       if (phase === PHASE_OPEN) {
         if (getResultLinks().length) {
           await openMatchingResult(article);
@@ -939,7 +1088,8 @@
         await sleep(500);
         continue;
       }
-      if (phase === PHASE_SEARCH || phase === PHASE_ASSIST) {
+
+      if (phase === PHASE_SEARCH) {
         if (isNewsSearchPage()) {
           await runAssist({ auto: true });
           return;
