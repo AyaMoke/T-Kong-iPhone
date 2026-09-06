@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         T-Kong for iPhone
 // @namespace    https://github.com/AyaMoke/T-Kong-iPhone
-// @version      0.6.4
+// @version      0.6.5
 // @description  iPhone向け。日経記事タイトルを端末内に一時記録し、楽天証券版日経テレコンでの同一記事検索を補助する非公式スクリプトです（Android拡張とは別）。
 // @author       AyaMoke
 // @match        https://www.nikkei.com/
@@ -30,6 +30,10 @@
   const OPEN_TODAY_KEY = "tKongOpenTodayNewspaper";
   const PENDING_ARTICLE_TTL_MS = 24 * 60 * 60 * 1000;
   const STORE_PREFIX = "tKong/";
+
+  // --- 直行リンク調整用パラメータ ---
+  const DIRECT_OPEN_DELAY_MS = 800; // ① ダイレクト遷移前の待機時間（ミリ秒）
+  const DIRECT_FALLBACK_WAIT_COUNT = 10; // ② フォールバック判定までの猶予回数（1回500ms、10＝5秒）
 
   const DEFAULT_SETTINGS = {
     enableDirectLink: true,
@@ -689,7 +693,7 @@
     await storageSet({ [PHASE_KEY]: PHASE_DIRECT });
     showToast("記事へダイレクト遷移します…");
     console.info("[T-Kong] direct open requested", article.directUrl);
-    await sleep(800);
+    await sleep(DIRECT_OPEN_DELAY_MS);
     location.assign(article.directUrl);
     await sleep(2500);
     return true;
@@ -1135,7 +1139,7 @@
           }
         } else {
           directWaitCount += 1;
-          if (directWaitCount >= 5) {
+          if (directWaitCount >= DIRECT_FALLBACK_WAIT_COUNT) {
             if (isTeleconErrorPage() || isNewsSearchPage()) {
               console.info("[T-Kong] direct link failed or redirected, falling back to search");
               showToast("ダイレクト表示不可のため、タイトル検索に切り替えます…");
