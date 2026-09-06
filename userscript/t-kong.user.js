@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         T-Kong for iPhone
 // @namespace    https://github.com/AyaMoke/T-Kong-iPhone
-// @version      0.6.0
+// @version      0.6.1
 // @description  iPhone向け。日経記事タイトルを端末内に一時記録し、楽天証券版日経テレコンでの同一記事検索を補助する非公式スクリプトです（Android拡張とは別）。
 // @author       AyaMoke
 // @match        https://www.nikkei.com/
@@ -33,7 +33,7 @@
 
   const DEFAULT_SETTINGS = {
     enableDirectLink: true,
-    autoConsent: true,
+    autoConsent: false,
     autoOpenAfterConsent: true,
     autoClickResult: true,
     stripTitlePrefixes: true,
@@ -275,7 +275,7 @@
   const SETTING_FIELDS = [
     ["enableDirectLink", "URLから記事本文へダイレクト遷移（推奨: ON）"],
     ["openBrokerAppAfterSave", "一時記録のあと楽天証券アプリ（iSPEED）の起動を促す"],
-    ["autoConsent", "許諾画面の「同意する」を自動クリック（推奨: ON）"],
+    ["autoConsent", "許諾画面の「同意する」を自動クリック"],
     ["autoOpenAfterConsent", "同意後に一時記録した記事を自動オープン"],
     ["autoClickResult", "検索結果の一致見出しを自動クリック"],
     ["showFloatingButton", "テレコン画面に「記録した記事を開く」ボタンを表示"],
@@ -613,6 +613,17 @@
     // 手動同意でもテレコン側自動オープンが続くよう、先にフラグを立てる
     getSettings().then((settings) => armAssistIfNeeded(settings));
 
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        (target.closest(".userFeedback.agree") ||
+          target.closest("form[name='SmtInfoJpNikkeiTelecomForm']"))
+      ) {
+        getSettings().then((settings) => armAssistIfNeeded(settings));
+      }
+    }, true);
+
     let tries = 0;
     const timer = setInterval(() => {
       tries += 1;
@@ -662,7 +673,9 @@
     await storageSet({ [PHASE_KEY]: PHASE_DIRECT });
     showToast("記事へダイレクト遷移します…");
     console.info("[T-Kong] direct open requested", article.directUrl);
+    await sleep(800);
     location.assign(article.directUrl);
+    await sleep(2500);
     return true;
   }
 
@@ -1030,6 +1043,7 @@
       mountSessionReloginButton();
       return;
     }
+    let directWaitCount = 0;
     for (let i = 0; i < 24; i += 1) {
       const settings = await getSettings();
       const article = await getFreshPendingArticle();
@@ -1043,17 +1057,38 @@
       }
 
       if (phase === PHASE_DIRECT) {
-        if (isTeleconErrorPage() || isNewsSearchPage()) {
-          console.info("[T-Kong] direct link failed or redirected, falling back to search");
-          showToast("ダイレクト表示不可のため、タイトル検索に切り替えます…");
-          await storageSet({ [PHASE_KEY]: PHASE_SEARCH });
-          if (isNewsSearchPage()) {
-            if (!isAllNewsSelected()) {
-              await switchToAllNews();
-            } else {
-              await searchByTitle(article);
+        const isDirectUrl = location.href.includes("LATCD015.do");
+        if (isDirectUrl) {
+          if (await completePendingIfOpened()) return;
+          if (isTeleconErrorPage()) {
+            console.info("[T-Kong] direct link resulted in error, fallback to search");
+            showToast("ダイレクト表示不可のため、タイトル検索に切り替えます…");
+            await storageSet({ [PHASE_KEY]: PHASE_SEARCH });
+            if (isNewsSearchPage()) {
+              if (!isAllNewsSelected()) {
+                await switchToAllNews();
+              } else {
+                await searchByTitle(article);
+              }
+              return;
             }
-            return;
+          }
+        } else {
+          directWaitCount += 1;
+          if (directWaitCount >= 5) {
+            if (isTeleconErrorPage() || isNewsSearchPage()) {
+              console.info("[T-Kong] direct link failed or redirected, falling back to search");
+              showToast("ダイレクト表示不可のため、タイトル検索に切り替えます…");
+              await storageSet({ [PHASE_KEY]: PHASE_SEARCH });
+              if (isNewsSearchPage()) {
+                if (!isAllNewsSelected()) {
+                  await switchToAllNews();
+                } else {
+                  await searchByTitle(article);
+                }
+                return;
+              }
+            }
           }
         }
         await sleep(500);
