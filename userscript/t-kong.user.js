@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         T-Kong for iPhone
 // @namespace    https://github.com/AyaMoke/T-Kong-iPhone
-// @version      0.6.3
+// @version      0.6.4
 // @description  iPhone向け。日経記事タイトルを端末内に一時記録し、楽天証券版日経テレコンでの同一記事検索を補助する非公式スクリプトです（Android拡張とは別）。
 // @author       AyaMoke
 // @match        https://www.nikkei.com/
@@ -357,7 +357,7 @@
   function parseNikkeiArticleUrl(rawUrl) {
     try {
       const urlStr = String(rawUrl || "");
-      const match = urlStr.match(/\/article\/([A-Za-z0-9_]+)/);
+      const match = urlStr.match(/\/article\/([A-Za-z0-9_-]+)/);
       if (!match) return null;
 
       const fullArticleId = match[1];
@@ -373,9 +373,10 @@
 
       let dateSuffix = "";
 
-      // パターンA: 標準の日付サフィックス (DDMMYYYY000000)
-      if (/^\d{8}000000$/.test(suffix)) {
-        dateSuffix = suffix;
+      // パターンA: 8桁の日付 (DDMMYYYY) で始まっている場合
+      if (/^\d{8}/.test(suffix)) {
+        const datePart = suffix.slice(0, 8);
+        dateSuffix = `${datePart}000000`;
       } else {
         // パターンB: トラッキングサフィックス (T00C26A9000000, W6A820C2000000 等)
         const trackingMatch = suffix.match(/(\d{1,4})A(0?[1-9]|1[0-2])/);
