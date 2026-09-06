@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         T-Kong for iPhone
 // @namespace    https://github.com/AyaMoke/T-Kong-iPhone
-// @version      0.6.2
+// @version      0.6.3
 // @description  iPhone向け。日経記事タイトルを端末内に一時記録し、楽天証券版日経テレコンでの同一記事検索を補助する非公式スクリプトです（Android拡張とは別）。
 // @author       AyaMoke
 // @match        https://www.nikkei.com/
@@ -839,10 +839,24 @@
   }
 
   async function searchByTitle(article) {
+    const settings = await getSettings();
+    const data = await storageGet(PHASE_KEY);
+    const phase = data[PHASE_KEY];
+
+    // 直行リンクが利用可能で、直行未試行の場合は検索を先走らせず直行を最優先
+    if (
+      settings.enableDirectLink !== false &&
+      article?.directUrl &&
+      phase !== PHASE_SEARCH &&
+      phase !== PHASE_OPEN
+    ) {
+      const opened = await tryDirectOpen(article);
+      if (opened) return true;
+    }
+
     const input = document.querySelector("#nwsKeyword");
     const button = document.querySelector("#nwsSearchBtn");
     if (!input || !button) return false;
-    const settings = await getSettings();
     const title = normalizeTitle(article.title, settings);
     if (!title) {
       showToast("検索用タイトルを作れませんでした");
@@ -1084,19 +1098,24 @@
     document.documentElement.appendChild(button);
   }
 
+  let isAssistedFlowRunning = false;
+
   async function continueAssistedFlow() {
+    if (isAssistedFlowRunning) return;
     if (isSessionExpiredPage()) {
       mountSessionReloginButton();
       return;
     }
-    let directWaitCount = 0;
-    for (let i = 0; i < 24; i += 1) {
-      const settings = await getSettings();
-      const article = await getFreshPendingArticle();
-      const data = await storageGet(PHASE_KEY);
-      const phase = data[PHASE_KEY];
-      if (!article?.title) return;
-      if (!phase) return;
+    isAssistedFlowRunning = true;
+    try {
+      let directWaitCount = 0;
+      for (let i = 0; i < 24; i += 1) {
+        const settings = await getSettings();
+        const article = await getFreshPendingArticle();
+        const data = await storageGet(PHASE_KEY);
+        const phase = data[PHASE_KEY];
+        if (!article?.title) return;
+        if (!phase) return;
 
       if (phase === PHASE_OPENING || phase === PHASE_DIRECT || phase === PHASE_ASSIST) {
         if (await completePendingIfOpened()) return;
@@ -1177,7 +1196,10 @@
       }
       return;
     }
+  } finally {
+    isAssistedFlowRunning = false;
   }
+}
 
   async function initTelecon() {
     injectStyle(`
